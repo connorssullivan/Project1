@@ -7,6 +7,8 @@
 #include <unistd.h> 
 #include <stdio.h>
 #include <cstdlib>
+#include <unordered_map>
+
 
 
 #ifndef CARD_h
@@ -14,7 +16,7 @@
 
 using namespace std;
 class Card {
-private:
+public:
     //Acard structure
     struct Acard {
         int num;
@@ -32,12 +34,12 @@ private:
 
     //deck
     vector<Acard> deck;
-    int nextCard; //Next card in deck
+    int nextCard; //!!!Important not index of the card, if you want index subtract 1 !!!!!!!!!!!!
 
     //Cards Symbols
     const char spade[4] ="\xe2\x99\xa0";
     const char club[4] ="\xe2\x99\xa3";
-    const char heart[4] ="\xe2\x99\xa0";
+    const char heart[4] ="\xe2\x99\xa5";
     const char diamond[4] ="\xe2\x99\xa6";
 
     //Used to keep track of suite order
@@ -68,6 +70,9 @@ private:
     void cardKing(const char card[], int row);
 
     void createHeads(int numberOfCards, int cols);
+    void deleteHeads();
+    Acard drawCard();
+    
 
 public:
     //Functions
@@ -76,7 +81,9 @@ public:
     void shuffleCard();
     void printDeckPart1Test(); //My function
     void printCard();
-    void printCards(int cols, int max, vector<Acard> dk);
+    void printCards(int rowSize, vector<Acard> dk);
+    vector<Acard> getHand(int numCards);
+
     
 };
 

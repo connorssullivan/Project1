@@ -5,10 +5,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 Card::Card(){
     nextCard = 0;
+
     for(int suit = SPADE; suit <= DIAMOND; suit++){
         for(int rank = ACE; rank <= KING; rank++){
             //Update next card
-            ++nextCard;
+            ++nextCard; //!!!Important not index of the card, if you want index subtract 1
 
             //Create new card
             Acard newCard;
@@ -41,6 +42,7 @@ Card::Card(){
 
             }
 
+
             
         }
     }
@@ -65,6 +67,29 @@ Card::~Card(){
         }
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+                            //Delete heads //
+////////////////////////////////////////////////////////////////////////////////////////////////
+void Card::deleteHeads(){
+    Node* curr;
+    Node* nx;
+
+    //Go through the heads array
+    for(int i = 0; i < heads.size();i++){
+        curr = heads[i];
+
+        //Delete each node
+        while(curr){
+            nx = curr->next;
+            delete curr;
+            curr = nx;
+        }
+    }
+
+    heads.clear();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
                             //Get card Function //
@@ -113,53 +138,72 @@ void Card::getCardFunc(Acard card,int row){
     case KING:
         cardKing(card.pic, row);
         break;
-
     default:
-        cardAce(card.pic, row);
-        break;
+        cardAce(spade, row);
+    
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+                            //Draw Card //
+////////////////////////////////////////////////////////////////////////////////////////////////
+Card::Acard Card::drawCard(){
+    --nextCard;//Subrtact from next card
+
+    //If next card is < 0, then we have to shuffle
+    if(nextCard < 0){
+        //cout << "\nShuffling cards at index " << nextCard<<endl; 
+        shuffleCard();
+        nextCard = 52;//Set the 1 more then after last index
+    }
+
+    //Get the top card
+    //cout << "\nIndex: " << nextCard << endl;
+    Acard topCard = deck[nextCard];
+    //cout << "\nIndex of draw card " << nextCard-1<<endl; 
+    
+
+    return topCard;
+    
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+                            //Get Hand //
+////////////////////////////////////////////////////////////////////////////////////////////////
+vector<Card::Acard> Card::getHand(int numCards){
+    vector<Acard> hand;//The hand
+
+    //Draw numCards and push to hand
+    for(int i = 0;i < numCards;i++)
+        hand.push_back(drawCard());
+    
+    return hand;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
                             //Print Cards //
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void Card::printCards(int cols, int max, vector<Acard> dk){
-    
-    
-}
+void Card::printCards(int rowSize, vector<Acard> dk){
+    //If there are heads from the old output delete them
+    if(!heads.empty())
+        deleteHeads();
 
-//Card 9x7 middle at  5,3
-//‾‾‾‾‾‾‾
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-                            //Print Deck Part 1 Test//
-////////////////////////////////////////////////////////////////////////////////////////////////
-void Card::printDeckPart1Test(){
-    //Allocate all lines for printing
-    for(int size = 2; size < 6; size++){
-        createHeads(size, size);//
     
-    }
+    //Create the heads
+    createHeads(dk.size(), rowSize);   
 
-    //Put all lines in correct list
-    int rowLength = 2;//For the row length
+
+    int index = 0; //Index of dk
     for(int i = 0; i < heads.size(); i+=11){
 
-            //If deck is out of cards
-            if(nextCard < 0)
-                break;
-            for(int j = rowLength; j > 0;j--){
-
-                //If deck is out of cards
-                if(nextCard < 0)
-                    break;
-                getCardFunc(deck[nextCard-1], i);//get correct card function
-                nextCard--;//Iterate through cards
-
-            }
-            ++rowLength;//update row length
+        for(int j = rowSize; j > 0; j--){
+            getCardFunc(dk[index],i); //Get the 
+            ++index;//Iterate through cards
         }
+    }
 
     //Print cards
     Node* curr;
@@ -170,11 +214,7 @@ void Card::printDeckPart1Test(){
             curr = curr->next;
         }
     }
-
-
-    
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
                             //Get Pic //
@@ -187,28 +227,37 @@ char* Card::getPic(Acard* card){
 ////////////////////////////////////////////////////////////////////////////////////////////////
                             //Shuffle Cards //
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void Card::shuffleCard(){
-    //Set up randon generator
+void Card::shuffleCard() {
+    //Set up random generator
     int r;
-    srand((unsigned) time(NULL));
+    srand(static_cast<unsigned>(time(NULL)));
+
     //Go through cards
-    for(int i = nextCard-1; i > 0;i--){
+    for (int i = nextCard-1; i >= 0; i--) {
+        //cout << "Card "<< i << ": "<< deck[i].pic<< deck[i].num << endl;
 
-        //Generate random number between 0 and i
-        r = rand() %(i+1);
+        // Generate random number between 0 and i
+        r = rand() % (i+1);
+        if(r > 51 || r < 0)
+            cout << "R is " << r;
 
-        //Swap cards
-        Acard* temp = &deck[r];
+        //Swap the cards 
+        Acard temp = deck[r];
         deck[r] = deck[i];
-        deck[i] = *temp;
+        deck[i] = temp;
+
+        //cout << "\nPost Shuffle" << endl;
+        //cout << "Card "<< i << deck[i].pic<< deck[i].num << endl;
 
     }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
                             //Create heads //
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void Card::createHeads(int numberOfCards, int cols){
+
     int numberOfRows = (numberOfCards/cols)*11; //Get the number of rows
     //Make the heads of each line
     for(int i = 0; i < numberOfRows; i++){
@@ -252,7 +301,7 @@ void Card::cardAce(const char card[], int row) {
         } 
         
         //Middle of card
-        else if (i == 6) {
+        else if (i == 5) {
             strcpy(line->str, "|  ");
             strcat(line->str, card);
             strcat(line->str, "  |");
@@ -877,619 +926,53 @@ void Card::cardKing(const char card[], int row) {
 
 
 
-//Saved code
 /*
-void Card::cardAce(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|A      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
+////////////////////////////////////////////////////////////////////////////////////////////////
+                            //Print Deck Part 1 Test//
+////////////////////////////////////////////////////////////////////////////////////////////////
+void Card::printDeckPart1Test(){
+    //If there are heads from the old output delete them
+    if(!heads.empty()){
+        deleteHeads();
     }
 
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
+    //Allocate all lines for printing
+    for(int size = 2; size < 6; size++){
+        createHeads(size, size);//
+    
     }
 
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
+    //Put all lines in correct list
+    int rowLength = 2;//For the row length
+    for(int i = 0; i < heads.size(); i+=11){
+
+            //If deck is out of cards
+            if(nextCard < 1)
+                break;
+            for(int j = rowLength; j > 0;j--){
+
+                //If deck is out of cards
+                if(nextCard < 0)
+                    break;
+                getCardFunc(deck[nextCard-1], i);//get correct card function
+                nextCard--;//Iterate through cards
+
+            }
+            ++rowLength;//update row length
+        }
+
+    //Print cards
+    Node* curr;
+    for(int i = 0; i < heads.size(); i++){
+        curr = heads[i];
+        while(curr){
+            cout << curr->str;
+            curr = curr->next;
+        }
     }
 
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
 
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      A|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-
+    
 }
 
-
-
-void Card::cardTwo(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|2      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      2|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardThree(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|3      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      3|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardFour(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|4      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      4|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardFive(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|5      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      5|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardSix(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|6      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      6|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardSeven(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|7      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      7|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardEight(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|8      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      8|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardNine(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|9      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      9|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardTen(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|10     |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|     10|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardJack(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|J      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      J|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardQueen(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|Q      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      Q|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-void Card::cardKing(const char card[]){
-    //print firat half of card
-    cout << " _______";
-    cout <<"\n|K      |";
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    //See if its a spade
-    if(strcmp(card,spade)){
-        //Print the spade
-        cout << "\n|   " << spade <<"   |";
-    }
-    //Club
-    else if(strcmp(card,club)){
-        //Print the Club
-        cout << "\n|   " << club <<"   |";
-    }
-
-    //Heart
-    else if(strcmp(card,heart)){
-        //Print the Heart
-        cout << "\n|   " << heart <<"   |";
-    }
-
-    //Diamond
-    else if(strcmp(card,spade)){
-        //Print theDiamond
-        cout << "\n|   " << diamond <<"   |";
-    }
-
-    else{
-        
-        cout << "\n|   " << " " <<"   |";
-    }
-
-    //Print bottom portion of card
-    for(int i = 0;i< 3; i++)
-        cout <<"\n|       |";
-    cout <<"\n|      K|";
-    cout << "\n ‾‾‾‾‾‾‾";
-    cout << endl;
-}
-
-
-
-
-void Card::printCard(Acard* card){
-    //Get card rank and suite
-    int num = card->num;
-    char* suite = card->pic;
-
-    //Determine which card it is
-    switch(num){
-        case ACE:
-            cardAce(suite);
-            break;
-        case TWO:
-            cardTwo(suite);
-            break;
-        case THREE:
-            cardThree(suite);
-            break;
-        case FOUR:
-            cardFour(suite);
-            break;
-        case FIVE:
-            cardFive(suite);
-            break;
-        case SIX:
-            cardSix(suite);
-            break;
-        case SEVAN:
-            cardSeven(suite);
-            break;
-        case EIGHT:
-            cardEight(suite);
-            break;
-        case NINE:
-            cardNine(suite);
-            break;
-        case TEN:
-            cardTen(suite);
-            break;
-        case JACK:
-            cardJack(suite);
-            break;
-        case QUEEN:
-            cardQueen(suite);
-            break;
-        case KING: 
-            cardKing(suite);
-            break;
-
-    }
-
-}
 */
